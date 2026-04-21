@@ -1,82 +1,123 @@
-# Rate Limiter API — Source Asia Backend Assignment
+# 🚀 Rate Limiter API — Source Asia Backend Assignment
 
-A production-considerate rate-limiting API built with **Next.js 15** (App Router + Route Handlers).
+A **production-grade, secure Rate Limiter API** built with Next.js 15, featuring JWT authentication, MySQL persistence, sliding window rate limiting, and a Postman-style interactive dashboard.
 
 ---
 
-## Features
+## 🧰 Tech Stack
 
-| Feature | Details |
+| Technology | Purpose |
 |---|---|
-| `POST /api/request` | Accepts `{ user_id, payload }`, enforces rate limit |
-| `GET /api/stats` | Per-user stats; filter with `?user_id=` |
-| Rate limit | **5 requests per user per minute** (sliding window) |
-| Concurrency | Per-user async lock prevents race conditions |
-| Storage | In-memory (`Map`) — no DB required |
-| Dashboard | Interactive UI to test and visualize stats |
+| **Next.js 15** (App Router) | Full-stack React framework — API routes + UI |
+| **TypeScript** | End-to-end type safety across API and UI |
+| **MySQL 8** | Persistent storage — users, requests, and aggregated stats |
+| **mysql2** | Node.js MySQL driver with connection pooling |
+| **JSON Web Tokens (JWT)** | Stateless authentication via `jose` library |
+| **bcryptjs** | Secure password hashing (cost factor 10) |
+| **React** | Interactive Postman-style dashboard UI |
+| **Tailwind CSS** | Utility-first CSS (base reset + global tokens) |
+| **Vanilla CSS / CSS Variables** | Design system — dark theme, animations, JWT color coding |
 
 ---
 
-## Getting Started
+## ✨ Features
 
-### Prerequisites
-- Node.js 18+
-- npm
+### 🔐 Authentication
+- **JWT-based security** — All protected routes require a `Bearer <token>` header
+- **1-hour token expiry** — Automatically enforced by the `jose` library
+- **bcrypt password hashing** — Passwords never stored in plain text
+- **User registration** — New users can self-register via `POST /api/auth/register`
+- **Auto-login after registration** — JWT issued immediately on account creation
+- **Session persistence** — Token stored in `localStorage`, restored on page reload
 
-### Install & Run
+### ⚡ Rate Limiting
+- **5 requests per user per minute** — Sliding window algorithm
+- **Per-user async lock** — Prevents TOCTOU race conditions under concurrent load
+- **HTTP 429 response** — Includes `Retry-After` and `X-RateLimit-*` headers
+- **User-scoped** — Each `user_id` has its own independent limit
 
-```bash
-cd source-asia-backend
-npm install
-npm run dev
-```
+### 🗄️ MySQL Persistence
+- **`users` table** — Credential store with bcrypt-hashed passwords
+- **`requests` table** — Full log of every API call with status and payload
+- **`user_stats` table** — Aggregated counters per user (upserted atomically)
+- **Auto-initialized** — Tables and seed users created on first API call
+- **Connection pooling** — Reuses connections via `mysql2` pool
 
-The server starts at **http://localhost:3000**
-
-### Build for Production
-
-```bash
-npm run build
-npm start
-```
+### 🖥️ Professional Dashboard (Postman-style)
+- **API Tester tab** — Select endpoints from a sidebar collection, edit body, and send requests
+- **JSON syntax highlighting** — Keys, strings, numbers, booleans, and nulls color-coded
+- **JWT Token Visualizer** — Token split into Header / Payload / Signature with `jwt.io` colors
+- **Live JWT Decoder** — Inspect header and payload without leaving the browser
+- **Token countdown** — Pulsing live timer shows remaining session time
+- **Stats tab** — Animated counters and per-user success rate progress bars
+- **Docs tab** — Interactive curl examples with copy button per endpoint
+- **Toast notifications** — Success, error, warning, and info alerts with auto-dismiss
+- **Register / Sign In tabs** — Password strength meter and confirm-password match indicator
 
 ---
 
-## API Reference
+## 📡 API Reference
 
-### `POST /api/request`
-
-**Request body:**
+### `POST /api/auth/login` — Public
+```bash
+curl -X POST http://localhost:3000/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"admin","password":"admin123"}'
+```
+**200 OK:**
 ```json
 {
-  "user_id": "user_001",
-  "payload": { "action": "fetch_data" }
+  "token": "eyJhbGci...",
+  "expiresAt": 1700000000000,
+  "user": { "id": "uuid", "username": "admin" },
+  "message": "Login successful"
 }
 ```
 
+---
+
+### `POST /api/auth/register` — Public
+```bash
+curl -X POST http://localhost:3000/api/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"username":"newuser","password":"mypass123","confirmPassword":"mypass123"}'
+```
+**201 Created:** Returns JWT token (user is immediately logged in)
+
+Validation:
+- Username: min 3 chars, `[a-zA-Z0-9_]` only
+- Password: min 6 chars
+- Returns `409 Conflict` if username is already taken
+
+---
+
+### `POST /api/request` — 🔒 JWT Required
+```bash
+curl -X POST http://localhost:3000/api/request \
+  -H "Authorization: Bearer eyJhbGci..." \
+  -H "Content-Type: application/json" \
+  -d '{"user_id":"user_001","payload":{"action":"fetch_data","query":"products"}}'
+```
 **200 OK:**
 ```json
 {
   "success": true,
-  "requestId": "550e8400-e29b-41d4-a716-446655440000",
+  "requestId": "uuid",
   "userId": "user_001",
   "processedAt": "2025-01-01T00:00:00.000Z",
   "remainingRequests": 4,
   "message": "Request processed successfully"
 }
 ```
-
-**429 Too Many Requests** (when limit exceeded):
+**429 Too Many Requests:**
 ```json
 {
   "error": "Rate limit exceeded",
-  "message": "You have exceeded the limit of 5 requests per minute.",
   "userId": "user_001",
   "retryAfter": "60 seconds"
 }
 ```
-
-Response headers always include:
+**Response headers always include:**
 ```
 X-RateLimit-Limit: 5
 X-RateLimit-Remaining: <n>
@@ -86,14 +127,17 @@ Retry-After: 60   (only on 429)
 
 ---
 
-### `GET /api/stats`
-
-Returns all users' stats.
-
+### `GET /api/stats` — 🔒 JWT Required
 ```bash
-curl http://localhost:3000/api/stats
-```
+# All users
+curl http://localhost:3000/api/stats \
+  -H "Authorization: Bearer eyJhbGci..."
 
+# Single user
+curl "http://localhost:3000/api/stats?user_id=user_001" \
+  -H "Authorization: Bearer eyJhbGci..."
+```
+**200 OK:**
 ```json
 {
   "totalUsers": 2,
@@ -109,76 +153,129 @@ curl http://localhost:3000/api/stats
 }
 ```
 
-**Filter by user:**
-
-```bash
-curl http://localhost:3000/api/stats?user_id=user_001
-```
-
 ---
 
-## Rate Limiting Design
+## 🏗️ Rate Limiting Design
 
 ### Algorithm: Sliding Window
-- Each user has a list of timestamps for their recent requests.
-- On every request, timestamps older than 60 seconds are evicted.
-- If the remaining count >= 5, the request is rejected with HTTP 429.
-- Otherwise, the timestamp is recorded and the request is allowed.
+- Each user has a list of timestamps for recent requests (stored in-memory and persisted to MySQL).
+- On every request, timestamps older than **60 seconds** are evicted.
+- If the remaining count ≥ 5, the request is rejected with **HTTP 429**.
+- Otherwise the timestamp is recorded and the request is allowed.
 
 ### Concurrency Safety
-Node.js is single-threaded, so Map mutations don't have true data races. However, async/await can cause interleaving (TOCTOU) if multiple concurrent requests arrive for the same user. To prevent this, a **per-user async lock** (promise chaining) serialises the check-and-update critical section per user while allowing full parallelism across different users.
-
-### Limitations (In-Memory Store)
-- **No persistence** — state is lost on server restart.
-- **Not horizontally scalable** — each process has its own memory; use Redis for multi-instance deployments.
-- **Memory growth** — if users never re-request, their entries accumulate. A periodic cleanup (e.g., setInterval) is recommended at scale.
+Node.js is single-threaded but `async/await` can cause interleaving (TOCTOU) when multiple requests arrive for the same user simultaneously. A **per-user async lock** (promise chaining) serialises the check-and-update critical section per user, while allowing full parallelism across different users.
 
 ---
 
-## Bonus: Redis Integration (Recommended for Production)
-
-Replace the in-memory store with Redis using ioredis:
-
-```bash
-npm install ioredis
-```
-
-Use Redis ZADD + ZREMRANGEBYSCORE for atomic sliding window:
-
-```ts
-// Atomic sliding window in Redis
-await redis.zremrangebyscore(key, 0, now - windowMs)
-const count = await redis.zcard(key)
-if (count >= limit) { /* 429 */ }
-await redis.zadd(key, now, crypto.randomUUID())
-await redis.expire(key, 60)
-```
-
----
-
-## Project Structure
+## 🖥️ Project Structure
 
 ```
 source-asia-backend/
 ├── src/
 │   ├── app/
 │   │   ├── api/
-│   │   │   ├── request/route.ts   # POST /api/request
-│   │   │   └── stats/route.ts     # GET /api/stats
-│   │   ├── page.tsx               # Interactive dashboard
+│   │   │   ├── auth/
+│   │   │   │   ├── login/route.ts       # POST /api/auth/login
+│   │   │   │   └── register/route.ts    # POST /api/auth/register
+│   │   │   ├── request/route.ts         # POST /api/request (JWT protected)
+│   │   │   └── stats/route.ts           # GET  /api/stats   (JWT protected)
+│   │   ├── page.tsx                     # Postman-style dashboard UI
 │   │   ├── layout.tsx
-│   │   └── globals.css
+│   │   └── globals.css                  # Design system + animations
 │   └── lib/
-│       └── store.ts               # In-memory store + rate limiter
+│       ├── store.ts                     # In-memory sliding window + per-user lock
+│       ├── db.ts                        # MySQL connection pool
+│       ├── db-init.ts                   # Auto-create tables + seed users
+│       ├── persistence.ts               # MySQL read/write helpers
+│       ├── jwt.ts                       # Sign + verify JWT (jose)
+│       └── auth-guard.ts               # Middleware to extract & validate JWT
+├── .env.local                           # Secrets (NOT committed)
 ├── package.json
 └── README.md
 ```
 
 ---
 
-## Tech Stack
+## ⚙️ Environment Variables
 
-- **Next.js 15** — App Router + Route Handlers
-- **TypeScript** — Full type safety
-- **In-memory Maps** — Zero-dependency storage
-- **React** — Interactive dashboard UI
+Create a `.env.local` file in the project root:
+
+```env
+# MySQL Database
+DB_HOST=localhost
+DB_PORT=3306
+DB_USER=root
+DB_PASSWORD=your_password
+DB_NAME=Source_Asia
+
+# JWT Authentication
+JWT_SECRET=your-super-secret-key-change-in-production
+
+# Rate Limiting
+RATE_LIMIT_MAX=5
+RATE_LIMIT_WINDOW_MS=60000
+```
+
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+- **Node.js 18+**
+- **MySQL 8** running locally
+- Create a database named `Source_Asia` (tables are auto-created on first run)
+
+### Install & Run
+
+```bash
+cd source-asia-backend
+npm install
+npm run dev
+```
+
+The server starts at **http://localhost:3000**
+
+### Default Demo Accounts (auto-seeded)
+
+| Username | Password | Role |
+|---|---|---|
+| `admin` | `admin123` | Administrator |
+| `demo` | `demo123` | Demo user |
+
+---
+
+## 🔒 Security Notes
+
+- `.env.local` is excluded from version control via `.gitignore`
+- Passwords are hashed with **bcrypt** (cost factor 10) — never stored in plain text
+- JWT tokens expire after **1 hour** and are validated on every protected request
+- SQL queries use **parameterised statements** to prevent SQL injection
+
+---
+
+## 🏭 Production Considerations
+
+| Concern | Current Approach | Production Recommendation |
+|---|---|---|
+| Rate limit state | In-memory `Map` | **Redis** with atomic ZADD/ZRANGEBYSCORE |
+| Secrets | `.env.local` | Managed secrets (AWS Secrets Manager, Vault) |
+| Database | Single MySQL instance | Read replicas + connection pooling (PgBouncer) |
+| Scalability | Single process | Horizontal scaling with shared Redis store |
+| Auth | 1-hour JWT | Short-lived access token + refresh token rotation |
+
+---
+
+## 📦 Dependencies
+
+```json
+{
+  "next": "^15.x",
+  "react": "^18.x",
+  "typescript": "^5.x",
+  "mysql2": "^3.x",
+  "jose": "^5.x",
+  "bcryptjs": "^3.x",
+  "tailwindcss": "^4.x"
+}
+```
