@@ -22,6 +22,12 @@ function createPool(): mysql.Pool {
     connectionLimit: 10,
     queueLimit: 0,
     timezone: 'Z',
+    ...(process.env.DB_SSL === 'true' && {
+      ssl: {
+        minVersion: 'TLSv1.2',
+        rejectUnauthorized: true,
+      },
+    }),
   })
 }
 
