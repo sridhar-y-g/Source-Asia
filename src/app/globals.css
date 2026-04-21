@@ -1,0 +1,167 @@
+@import "tailwindcss";
+
+/* ── Design Tokens ────────────────────────────────────────────── */
+:root {
+  --app-bg:      #0b0b18;
+  --sidebar-bg:  #10101e;
+  --panel-bg:    #15152a;
+  --card-bg:     #1c1c32;
+  --input-bg:    #0d0d1e;
+  --border:      rgba(255,255,255,0.07);
+  --border-h:    rgba(124,58,237,0.5);
+  --violet:      #7c3aed;
+  --indigo:      #6366f1;
+  --blue:        #3b82f6;
+  --green:       #22c55e;
+  --red:         #ef4444;
+  --amber:       #f97316;
+  --cyan:        #06b6d4;
+  --pink:        #ec4899;
+
+  /* JWT.io standard colors */
+  --jwt-header:    #fb015b;
+  --jwt-payload:   #d63aff;
+  --jwt-signature: #00b9f1;
+
+  /* Text */
+  --text:        #e4e4f0;
+  --text-sub:    #7878a0;
+  --text-muted:  #3d3d5c;
+
+  /* Methods */
+  --method-post: #f97316;
+  --method-get:  #22c55e;
+}
+
+/* ── Reset ────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { height: 100%; }
+body { height: 100%; background: var(--app-bg); color: var(--text); font-family: 'Inter', 'Segoe UI', sans-serif; -webkit-font-smoothing: antialiased; overflow: hidden; }
+#__next, main { height: 100%; }
+
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+
+/* ── Keyframes ────────────────────────────────────────────────── */
+@keyframes float-1    { 0%,100%{transform:translate(0,0)scale(1)} 33%{transform:translate(60px,-80px)scale(1.06)} 66%{transform:translate(-40px,30px)scale(0.97)} }
+@keyframes float-2    { 0%,100%{transform:translate(0,0)scale(1)} 33%{transform:translate(-60px,50px)scale(1.04)} 66%{transform:translate(40px,-60px)scale(1.03)} }
+@keyframes float-3    { 0%,100%{transform:translate(0,0)} 50%{transform:translate(30px,60px)scale(1.05)} }
+@keyframes modal-in   { from{opacity:0;transform:scale(0.86)translateY(32px)} to{opacity:1;transform:scale(1)translateY(0)} }
+@keyframes backdrop-in{ from{opacity:0} to{opacity:1} }
+@keyframes toast-in   { from{opacity:0;transform:translateX(110%)} to{opacity:1;transform:translateX(0)} }
+@keyframes toast-bar  { from{width:100%} to{width:0%} }
+@keyframes shimmer    { from{background-position:-250% center} to{background-position:250% center} }
+@keyframes spin       { to{transform:rotate(360deg)} }
+@keyframes shake      { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-10px)} 75%{transform:translateX(10px)} }
+@keyframes pulse-dot  { 0%,100%{box-shadow:0 0 0 0 rgba(34,197,94,0.5)} 50%{box-shadow:0 0 0 6px rgba(34,197,94,0)} }
+@keyframes slide-in   { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+@keyframes glow-icon  { 0%,100%{filter:drop-shadow(0 0 8px rgba(124,58,237,0.4))} 50%{filter:drop-shadow(0 0 20px rgba(124,58,237,0.85))} }
+@keyframes gradient-f { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
+@keyframes draw-check { from{stroke-dashoffset:36} to{stroke-dashoffset:0} }
+
+/* ── Animation classes ────────────────────────────────────────── */
+.a-modal   { animation: modal-in    0.4s cubic-bezier(.34,1.56,.64,1) both }
+.a-back    { animation: backdrop-in 0.25s ease both }
+.a-toast   { animation: toast-in    0.42s cubic-bezier(.17,.67,.83,.67) both }
+.a-slide   { animation: slide-in    0.3s ease both }
+.a-shake   { animation: shake       0.44s ease }
+.a-spin    { animation: spin        0.7s linear infinite }
+.a-glow    { animation: glow-icon   2.8s ease-in-out infinite }
+.a-fade    { animation: backdrop-in 0.3s ease both }
+
+/* Gradient text */
+.grad-text {
+  background: linear-gradient(135deg, #a78bfa, #818cf8, #38bdf8);
+  background-size: 200% 200%;
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: gradient-f 5s ease-in-out infinite;
+}
+
+/* ── Orbs ─────────────────────────────────────────────────────── */
+.orb { position:absolute; border-radius:50%; filter:blur(110px); pointer-events:none; opacity:0.5; }
+.orb-1 { width:700px;height:700px; background:radial-gradient(circle,rgba(124,58,237,0.35) 0%,transparent 70%); top:-280px;left:-200px; animation:float-1 22s ease-in-out infinite; }
+.orb-2 { width:550px;height:550px; background:radial-gradient(circle,rgba(99,102,241,0.28) 0%,transparent 70%); bottom:-230px;right:-200px; animation:float-2 26s ease-in-out infinite; }
+.orb-3 { width:450px;height:450px; background:radial-gradient(circle,rgba(6,182,212,0.18) 0%,transparent 70%); top:45%;left:45%; animation:float-3 17s ease-in-out infinite; }
+.grid-bg { position:absolute;inset:0; background-image:linear-gradient(rgba(124,58,237,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(124,58,237,0.04) 1px,transparent 1px); background-size:40px 40px; }
+
+/* ── Shimmer button ───────────────────────────────────────────── */
+.shimmer-btn { position:relative; overflow:hidden; }
+.shimmer-btn::after { content:''; position:absolute; inset:0; background:linear-gradient(105deg,transparent 35%,rgba(255,255,255,0.16) 50%,transparent 65%); background-size:250% 100%; animation:shimmer 2.6s ease-in-out infinite; }
+
+/* ── Pulse dot ────────────────────────────────────────────────── */
+.pulse { width:8px;height:8px;border-radius:50%;background:var(--green); animation:pulse-dot 2s ease-in-out infinite; flex-shrink:0; }
+
+/* ── Toast bar ────────────────────────────────────────────────── */
+.tbar { position:absolute;bottom:0;left:0;height:2px;border-radius:0 0 12px 12px; animation:toast-bar 4s linear forwards; }
+
+/* ── Method badges ────────────────────────────────────────────── */
+.m-post { background:rgba(249,115,22,0.15); color:#f97316; border:1px solid rgba(249,115,22,0.3); }
+.m-get  { background:rgba(34,197,94,0.15);  color:#22c55e; border:1px solid rgba(34,197,94,0.3);  }
+
+/* ── Status badges ────────────────────────────────────────────── */
+.s-2xx { background:rgba(34,197,94,0.12); color:#22c55e; border:1px solid rgba(34,197,94,0.3); }
+.s-4xx { background:rgba(249,115,22,0.12); color:#f97316; border:1px solid rgba(249,115,22,0.3); }
+.s-429 { background:rgba(239,68,68,0.12); color:#ef4444; border:1px solid rgba(239,68,68,0.3); }
+.s-err { background:rgba(239,68,68,0.12); color:#ef4444; border:1px solid rgba(239,68,68,0.3); }
+
+/* ── JSON Syntax ──────────────────────────────────────────────── */
+.jk { color:#79c0ff }   /* key */
+.js { color:#a5d6ff }   /* string */
+.jn { color:#ffa657 }   /* number */
+.jb { color:#ff7b72 }   /* bool */
+.jl { color:#8b949e }   /* null */
+
+/* ── JWT colors ───────────────────────────────────────────────── */
+.jwt-h { color:var(--jwt-header); }
+.jwt-p { color:var(--jwt-payload); }
+.jwt-s { color:var(--jwt-signature); }
+
+/* ── Input ────────────────────────────────────────────────────── */
+.px-input {
+  background: var(--input-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  padding: 10px 12px 10px 38px;
+  font-size: 14px;
+  font-family: inherit;
+  outline: none;
+  width: 100%;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.px-input:focus { border-color: var(--violet); box-shadow: 0 0 0 3px rgba(124,58,237,0.18); }
+.px-input::placeholder { color: var(--text-muted); }
+
+/* ── Tab underline ────────────────────────────────────────────── */
+.tab-ul { border-bottom: 1px solid var(--border); display:flex; gap:0; padding:0 16px; }
+.tab-ul button {
+  padding: 10px 16px; border:none; background:transparent;
+  color: var(--text-sub); border-bottom: 2px solid transparent;
+  cursor:pointer; font-size:13px; font-family:inherit; transition:all 0.2s;
+  margin-bottom:-1px;
+}
+.tab-ul button.active { color: var(--violet); border-bottom-color: var(--violet); font-weight:600; }
+.tab-ul button:hover:not(.active) { color: var(--text); }
+
+/* ── Sidebar endpoint item ────────────────────────────────────── */
+.ep-item {
+  display:flex; align-items:center; gap:10px; padding:10px 16px;
+  cursor:pointer; border-left:2px solid transparent;
+  transition:all 0.18s; user-select:none;
+}
+.ep-item:hover { background:rgba(255,255,255,0.04); }
+.ep-item.active { background:rgba(124,58,237,0.12); border-left-color:var(--violet); }
+
+/* ── Code block ───────────────────────────────────────────────── */
+.code-pre {
+  background:#080812; border:1px solid var(--border); border-radius:10px;
+  padding:14px 16px; font-family:'JetBrains Mono','Fira Code',monospace;
+  font-size:12.5px; line-height:1.7; overflow-x:auto; color:#c9d1d9;
+  white-space:pre;
+}
+
+/* ── Check path animation (SVG) ───────────────────────────────── */
+.ck { stroke-dasharray:36; animation:draw-check 0.35s ease-out 0.1s both; }
