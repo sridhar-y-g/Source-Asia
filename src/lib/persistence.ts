@@ -106,7 +106,7 @@ export async function getRecentRequests(
 ): Promise<{ id: string; userId: string; status: string; createdAt: string }[]> {
   let sql = `SELECT id, user_id AS userId, status, created_at AS createdAt
              FROM requests`
-  const params: unknown[] = []
+    const params: any[] = []
   if (userId) {
     sql += ' WHERE user_id = ?'
     params.push(userId)
