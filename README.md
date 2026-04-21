@@ -2,6 +2,8 @@
 
 A **production-grade, secure Rate Limiter API** built with Next.js 15, featuring JWT authentication, MySQL persistence, sliding window rate limiting, and a Postman-style interactive dashboard.
 
+🟢 **Live Demo:** [https://source-asia-backend.vercel.app](https://source-asia-backend.vercel.app)
+
 ---
 
 ## 🧰 Tech Stack
@@ -199,15 +201,16 @@ source-asia-backend/
 
 ## ⚙️ Environment Variables
 
-Create a `.env.local` file in the project root:
+Create a `.env.local` file in the project root. For local development, use your local MySQL server. For production on Vercel, use a cloud database like **TiDB Serverless**.
 
 ```env
-# MySQL Database
-DB_HOST=localhost
-DB_PORT=3306
-DB_USER=root
-DB_PASSWORD=your_password
-DB_NAME=Source_Asia
+# MySQL Database (Local or Cloud)
+DB_HOST=gateway01.ap-southeast-1.prod.alicloud.tidbcloud.com
+DB_PORT=4000
+DB_USER=Mo6rahpdav5Y9sK.root
+DB_PASSWORD=your_cloud_password
+DB_NAME=test
+DB_SSL=true  # Required for TiDB Serverless and strictly enforced cloud databases
 
 # JWT Authentication
 JWT_SECRET=your-super-secret-key-change-in-production
@@ -219,7 +222,17 @@ RATE_LIMIT_WINDOW_MS=60000
 
 ---
 
-## 🚀 Getting Started
+## 🚀 Deployment (Vercel)
+
+This application is fully compatible with Vercel Serverless Functions.
+
+1. **Database:** Standard Vercel limits prohibit connecting to `localhost`. You **must** provision a cloud MySQL database (e.g., TiDB, Aiven, PlanetScale).
+2. **Environment Variables:** Provide all the variables listed above into your Vercel Project Settings.
+3. **Database Initialization:** Ensure `DB_SSL=true` is set if your provider requires it. The database tables (`users`, `requests`, `user_stats`) will automatically be created on the first API request via the `db-init.ts` logic.
+
+---
+
+## 💻 Getting Started (Local)
 
 ### Prerequisites
 - **Node.js 18+**
